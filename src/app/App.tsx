@@ -1566,15 +1566,34 @@ export default function App() {
     });
   }, [highScore, totalGems, lastScore, lastGems, scoreHistory, ownedChars, equippedChar, showHint, motionEnabled, sfxEnabled, sfxVolume]);
 
-  // Scale to *fill* viewport (avoid letterboxing / black bars)
+  // Adaptive scaling:
+  // - Keep it fullscreen (no black bars)
+  // - But avoid an overly aggressive zoom in tall portrait screens.
   useEffect(() => {
     const upd = () => {
-      setScale(Math.max(window.innerWidth / GW, window.innerHeight / GH));
+      const sx = window.innerWidth / GW;
+      const sy = window.innerHeight / GH;
+
+      // If the device is much taller than the game aspect, prefer "fit" to keep
+      // the view from looking too zoomed (still we’ll clamp to stay decent).
+      const gameAspect = GW / GH;
+      const deviceAspect = window.innerWidth / window.innerHeight;
+      const isVeryTallPortrait = deviceAspect < gameAspect * 0.85;
+
+      const rawScale = isVeryTallPortrait ? Math.min(sx, sy) : Math.max(sx, sy);
+
+      // Clamp to keep it from becoming too tiny or too zoomed.
+      const minScale = 0.65;
+      const maxScale = 1.65;
+      const clamped = Math.max(minScale, Math.min(maxScale, rawScale));
+
+      setScale(clamped);
     };
     upd();
     window.addEventListener("resize", upd);
     return () => window.removeEventListener("resize", upd);
   }, []);
+
 
 
   // Background star canvas (runs always)
