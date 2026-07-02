@@ -1888,14 +1888,23 @@ export default function App() {
                 </div>
               </div>
               <button
-                className="pointer-events-auto w-10 h-10 flex items-center justify-center"
+                className="pointer-events-auto flex flex-col items-center justify-center"
                 style={{
-                  background: "rgba(8,14,33,0.82)", border: "1px solid rgba(0,229,255,0.18)",
-                  color: "#00e5ff", cursor: "pointer", fontSize: "16px",
+                  width: 44,
+                  height: 44,
+                  background: "rgba(8,14,33,0.82)",
+                  border: "1px solid rgba(0,229,255,0.18)",
+                  color: "#00e5ff",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  letterSpacing: "0.12em",
+                  lineHeight: 1.05,
+                  boxShadow: "0 0 24px rgba(0,229,255,0.10)",
                 }}
                 onClick={() => setScreen("paused")}
               >
-                ⏸
+                <span style={{ display: "block", fontSize: 14, marginBottom: 2 }}>⏸</span>
+                <span style={{ display: "block", fontSize: 10, color: "rgba(200,230,255,0.85)" }}>PAUSE</span>
               </button>
             </div>
           </div>
