@@ -1422,7 +1422,16 @@ export default function App() {
   const [liveGems, setLiveGems] = useState(0);
   const [ownedChars, setOwnedChars] = useState(() => new Set(initialProgress.ownedChars));
   const [equippedChar, setEquippedChar] = useState(initialProgress.equippedChar);
+  // Used only for menu/shop/etc scaling in case you want it later.
+  // Gameplay now renders true fullscreen by resizing canvases to the viewport.
   const [scale, setScale] = useState(1);
+
+  const viewWRef = useRef(0);
+  const viewHRef = useRef(0);
+  const dprRef = useRef(1);
+
+
+
   const [showHint, setShowHint] = useState(initialProgress.showHint);
   const [motionEnabled, setMotionEnabled] = useState(initialProgress.motionEnabled);
   const [sfxEnabled, setSfxEnabled] = useState(initialProgress.sfxEnabled);
@@ -1566,33 +1575,53 @@ export default function App() {
     });
   }, [highScore, totalGems, lastScore, lastGems, scoreHistory, ownedChars, equippedChar, showHint, motionEnabled, sfxEnabled, sfxVolume]);
 
-  // Adaptive scaling:
-  // - Keep it fullscreen (no black bars)
-  // - But avoid an overly aggressive zoom in tall portrait screens.
+  // Resize canvases to fill the viewport for true fullscreen gameplay.
+  // We keep using the game coordinate system (GW x GH), but we scale the canvas context
+  // each frame so drawing + input feel consistent.
   useEffect(() => {
-    const upd = () => {
-      const sx = window.innerWidth / GW;
-      const sy = window.innerHeight / GH;
+    const setup = () => {
+      const canvas = canvasRef.current;
+      const bgCanvas = bgCanvasRef.current;
+      if (!canvas || !bgCanvas) return;
 
-      // If the device is much taller than the game aspect, prefer "fit" to keep
-      // the view from looking too zoomed (still we’ll clamp to stay decent).
+      const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+      dprRef.current = dpr;
+
+      const w = Math.max(1, Math.floor(window.innerWidth));
+      const h = Math.max(1, Math.floor(window.innerHeight));
+
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+
+      bgCanvas.width = Math.floor(w * dpr);
+      bgCanvas.height = Math.floor(h * dpr);
+      bgCanvas.style.width = `${w}px`;
+      bgCanvas.style.height = `${h}px`;
+
+      viewWRef.current = w;
+      viewHRef.current = h;
+
+      // Keep scale state for possible UI scaling, but gameplay uses actual ctx scaling.
+      const sx = w / GW;
+      const sy = h / GH;
       const gameAspect = GW / GH;
-      const deviceAspect = window.innerWidth / window.innerHeight;
+      const deviceAspect = w / h;
       const isVeryTallPortrait = deviceAspect < gameAspect * 0.85;
-
       const rawScale = isVeryTallPortrait ? Math.min(sx, sy) : Math.max(sx, sy);
-
-      // Clamp to keep it from becoming too tiny or too zoomed.
       const minScale = 0.65;
       const maxScale = 1.65;
-      const clamped = Math.max(minScale, Math.min(maxScale, rawScale));
-
-      setScale(clamped);
+      setScale(Math.max(minScale, Math.min(maxScale, rawScale)));
     };
-    upd();
-    window.addEventListener("resize", upd);
-    return () => window.removeEventListener("resize", upd);
+
+    // Defaults for refs (if we previously removed them, this will fail compile; so ensure
+    // refs exist in file below). We'll add them back if needed.
+    setup();
+    window.addEventListener("resize", setup);
+    return () => window.removeEventListener("resize", setup);
   }, []);
+
 
 
 
@@ -1601,13 +1630,19 @@ export default function App() {
     const canvas = bgCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-    const stars = Array.from({ length: 140 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: 0.3 + Math.random() * 1.8,
-      op: 0.08 + Math.random() * 0.5,
-      spd: 0.08 + Math.random() * 0.35,
-    }));
+
+    let stars: { x: number; y: number; r: number; op: number; spd: number }[] = [];
+    const seedStars = () => {
+      stars = Array.from({ length: 140 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: 0.3 + Math.random() * 1.8,
+        op: 0.08 + Math.random() * 0.5,
+        spd: 0.08 + Math.random() * 0.35,
+      }));
+    };
+    seedStars();
+
     let raf: number;
     const draw = () => {
       ctx.fillStyle = "#04060f";
@@ -1625,8 +1660,18 @@ export default function App() {
       raf = requestAnimationFrame(draw);
     };
     draw();
-    return () => cancelAnimationFrame(raf);
+
+    const onResize = () => {
+      seedStars();
+    };
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
   }, []);
+
 
   // Flip gravity
   const syncActiveChar = useCallback(() => {
@@ -1667,9 +1712,17 @@ export default function App() {
     }
   }, [playSoundEffect, sfxEnabled]);
 
+
   // Start game
   const startGame = useCallback(() => {
     if (sfxEnabled) playSoundEffect("click");
+
+    // Try to enter fullscreen like classic arcade games.
+    try {
+      const el = document.documentElement;
+      if (el && el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    } catch {}
+
     const activeChar = equippedCharRef.current;
     gsRef.current = mkGS(activeChar);
     gsRef.current.charId = activeChar;
@@ -1678,6 +1731,7 @@ export default function App() {
     setShowHint(true);
     setScreen("playing");
   }, [playSoundEffect, sfxEnabled]);
+
 
   // Game loop
   useEffect(() => {
@@ -1698,7 +1752,15 @@ export default function App() {
       syncActiveChar();
       const effect = stepGame(gs);
       if (effect === "gem" && sfxEnabled) playSoundEffect("gem");
+
+      // Map game coordinates (GW x GH) to the fullscreen canvas.
+      const sx = canvas.width / GW;
+      const sy = canvas.height / GH;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(sx, sy);
       drawGame(ctx, gs);
+
 
       if (ts - lastUI > 80) {
         setLiveScore(gs.score);
@@ -1774,23 +1836,30 @@ export default function App() {
         style={{ display: isGame ? "none" : "block" }}
       />
 
-      {/* Game canvas */}
+      {/* Game canvas (true fullscreen) */}
       <canvas
         ref={canvasRef}
         width={GW}
         height={GH}
-        className="absolute"
+        className="absolute inset-0"
         style={{
-          top: "50%", left: "50%",
-          transform: `translate(-50%, -50%) scale(${scale})`,
           display: isGame ? "block" : "none",
+          width: "100%",
+          height: "100%",
           cursor: screen === "playing" ? "pointer" : "default",
           touchAction: "none",
         }}
         onClick={screen === "playing" ? flip : undefined}
-        onTouchStart={screen === "playing" ? (e) => { e.preventDefault(); flip(); } : undefined}
+        onPointerDown={screen === "playing" ? (e) => {
+          // Pointer/touch events are more reliable on mobile than onClick.
+          e.preventDefault();
+          (e.currentTarget as HTMLCanvasElement).setPointerCapture?.(e.pointerId);
+          flip();
+        } : undefined}
+        onTouchStart={undefined}
         onContextMenu={e => e.preventDefault()}
       />
+
 
       {/* HUD overlay */}
       {screen === "playing" && (
