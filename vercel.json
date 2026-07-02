@@ -7,7 +7,7 @@
   ],
   "headers": [
     {
-      "source": "/*",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Service-Worker-Allowed",
