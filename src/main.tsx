@@ -1,9 +1,11 @@
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
-  import { enablePwa } from "./pwa";
+import { createRoot } from "react-dom/client";
+import App from "./app/App.tsx";
+import "./styles/index.css";
+import "./mobile.css";
+import { enablePwa } from "./pwa";
 
-  enablePwa();
-  createRoot(document.getElementById("root")!).render(<App />);
+enablePwa();
+createRoot(document.getElementById("root")!).render(<App />);
+
   

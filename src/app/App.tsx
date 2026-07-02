@@ -811,8 +811,8 @@ function NeonBtn({
 }
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
-function MenuScreen({ highScore, totalGems, gamesPlayed, sfxEnabled, equippedChar, onPlay, onShop, onScores, onSettings, onAbout }: {
-  highScore: number; totalGems: number; gamesPlayed: number; sfxEnabled: boolean; equippedChar: number;
+function MenuScreen({ highScore, totalGems, gamesPlayed, sfxEnabled, onPlay, onShop, onScores, onSettings, onAbout }: {
+  highScore: number; totalGems: number; gamesPlayed: number; sfxEnabled: boolean;
   onPlay: () => void; onShop: () => void; onScores: () => void; onSettings: () => void; onAbout: () => void;
 }) {
   return (
@@ -870,15 +870,6 @@ function MenuScreen({ highScore, totalGems, gamesPlayed, sfxEnabled, equippedCha
           <div style={{ ...orb, color: "#00e5ff", fontSize: "8px", letterSpacing: "0.32em", opacity: 0.7 }}>ONE TAP ARCADE</div>
           <div style={{ height: "1px", width: "56px", background: "linear-gradient(to right, rgba(0,229,255,0.45), transparent)" }} />
         </div>
-      </div>
-
-      {/* Equipped preview */}
-      <div className="mb-6 flex flex-col items-center gap-2">
-        <div style={{ ...raj, color: "#4a6080", fontSize: "10px", letterSpacing: "0.24em" }}>ACTIVE LOADOUT</div>
-        <div style={{ width: "92px", height: "92px", borderRadius: "24px", background: "rgba(8,14,33,0.9)", border: "1px solid rgba(0,229,255,0.16)", boxShadow: "0 0 30px rgba(0,229,255,0.16)", display: "flex", alignItems: "center", justifyContent: "center", padding: "10px" }}>
-          <CharacterPreview index={equippedChar} active />
-        </div>
-        <div style={{ ...orb, color: "#c8e6ff", fontSize: "12px", letterSpacing: "0.16em" }}>{CHARS[equippedChar]?.name ?? "CUBE"}</div>
       </div>
 
       {/* Play button */}
@@ -1417,6 +1408,8 @@ function AboutScreen({ onBack }: { onBack: () => void }) {
 
 // ─── Main app ─────────────────────────────────────────────────────────────────
 export default function App() {
+  // Used by src/mobile.css to support forced landscape on mobile
+
   const initialProgress = readProgress();
   const [screen, setScreen] = useState<Screen>("menu");
   const [settingsReturnScreen, setSettingsReturnScreen] = useState<Screen>("menu");
@@ -1751,7 +1744,7 @@ export default function App() {
   const nextWorldThreshold = getNextWorldThreshold(liveScore);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden" style={{ background: "#04060f" }}>
+    <div className="gravityflip-root relative w-full h-screen overflow-hidden" style={{ background: "#04060f" }}>
       {/* Background canvas (always) */}
       <canvas
         ref={bgCanvasRef}
@@ -1836,7 +1829,6 @@ export default function App() {
           totalGems={totalGems}
           gamesPlayed={scoreHistory.length}
           sfxEnabled={sfxEnabled}
-          equippedChar={equippedChar}
           onPlay={startGame}
           onShop={() => setScreen("shop")}
           onScores={() => setScreen("scores")}

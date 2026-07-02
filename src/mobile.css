@@ -1,0 +1,25 @@
+/* Force mobile-friendly landscape rendering for Gravity Flip */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Rotate to landscape on mobile if the browser is portrait-oriented */
+@media (orientation: portrait) {
+  .gravityflip-root {
+    width: 100vh;
+    height: 100vw;
+    transform: rotate(90deg);
+    transform-origin: center center;
+  }
+}
+
+@media (orientation: landscape) {
+  .gravityflip-root {
+    transform: none;
+  }
+}
+
