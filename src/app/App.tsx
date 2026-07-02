@@ -1325,18 +1325,8 @@ function SettingsScreen({ showHint, motionEnabled, sfxEnabled, sfxVolume, onTogg
               >
                 {item.value ? "ENABLED" : "DISABLED"}
               </button>
-              <div
-                style={{
-                  ...raj,
-                  marginTop: "8px",
-                  color: "#4a6080",
-                  fontSize: "9px",
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Tap hint: {item.value ? "ON" : "OFF"}
-              </div>
+              {/* Tap hint status text intentionally omitted to keep UI clean */}
+
             </div>
           ))}
 
