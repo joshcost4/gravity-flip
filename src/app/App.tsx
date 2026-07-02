@@ -30,6 +30,8 @@ interface PersistedProgress {
   motionEnabled: boolean;
   sfxEnabled: boolean;
   sfxVolume: number;
+  musicEnabled: boolean;
+  musicVolume: number;
 }
 
 const DEFAULT_PROGRESS: PersistedProgress = {
@@ -44,6 +46,8 @@ const DEFAULT_PROGRESS: PersistedProgress = {
   motionEnabled: true,
   sfxEnabled: true,
   sfxVolume: 82,
+  musicEnabled: true,
+  musicVolume: 50,
 };
 
 function readProgress(): PersistedProgress {
@@ -71,6 +75,8 @@ function readProgress(): PersistedProgress {
       motionEnabled: typeof parsed.motionEnabled === "boolean" ? parsed.motionEnabled : true,
       sfxEnabled: typeof parsed.sfxEnabled === "boolean" ? parsed.sfxEnabled : true,
       sfxVolume: typeof parsed.sfxVolume === "number" ? Math.max(0, Math.min(100, parsed.sfxVolume)) : 82,
+      musicEnabled: typeof parsed.musicEnabled === "boolean" ? parsed.musicEnabled : true,
+      musicVolume: typeof parsed.musicVolume === "number" ? Math.max(0, Math.min(100, parsed.musicVolume)) : 50,
     };
   } catch {
     return DEFAULT_PROGRESS;
@@ -590,6 +596,273 @@ function stepGame(gs: GS): "gem" | null {
   return null;
 }
 
+function drawCharacterShape(
+  ctx: CanvasRenderingContext2D,
+  charId: number,
+  col: string,
+  w: number,
+  h: number,
+  rot: number,
+  frame: number,
+  accentColor: string
+) {
+  const half = w / 2;
+
+  ctx.save();
+  ctx.rotate((rot * Math.PI) / 180);
+
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 24;
+
+  if (charId === 0) {
+    // Cube
+    ctx.fillStyle = col;
+    ctx.fillRect(-half, -half, w, h);
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(-half, -half, w, h * 0.48);
+  } else if (charId === 1) {
+    // Ball
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.arc(-4, -4, half * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (charId === 2) {
+    // Bot
+    ctx.fillStyle = col;
+    ctx.fillRect(-half + 2, -half + 2, w - 4, h - 4);
+    ctx.fillStyle = "#04060f";
+    ctx.fillRect(-half + 8, -half + 8, w - 16, h - 16);
+    ctx.fillStyle = col;
+    ctx.fillRect(-3, -half - 7, 6, 8);
+    ctx.fillRect(-3, -half + 2, 6, 3);
+  } else if (charId === 3) {
+    // UFO
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(0, -half - 2);
+    ctx.quadraticCurveTo(half + 8, -2, 0, half + 4);
+    ctx.quadraticCurveTo(-half - 8, -2, 0, -half - 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(4,6,15,0.78)";
+    ctx.fillRect(-half + 6, -half + 6, w - 12, h - 12);
+    ctx.fillStyle = col;
+    ctx.fillRect(-half + 10, -half + 8, w - 20, h - 16);
+  } else if (charId === 4) {
+    // Bird
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(0, -half - 2);
+    ctx.lineTo(half + 2, 6);
+    ctx.lineTo(-half - 2, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.moveTo(-2, -half + 2);
+    ctx.lineTo(6, 4);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 5) {
+    // Prism
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(0, -half - 2);
+    ctx.lineTo(half + 4, 0);
+    ctx.lineTo(0, half + 2);
+    ctx.lineTo(-half - 4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.fillRect(-5, -4, 10, 8);
+  } else if (charId === 6) {
+    // Jet
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(-half + 2, -4);
+    ctx.lineTo(half - 2, -4);
+    ctx.lineTo(half - 8, 0);
+    ctx.lineTo(half - 2, 4);
+    ctx.lineTo(-half + 2, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 7) {
+    // Star
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(0, -half - 4);
+    ctx.lineTo(6, -8);
+    ctx.lineTo(half + 2, -4);
+    ctx.lineTo(10, 2);
+    ctx.lineTo(4, half + 2);
+    ctx.lineTo(0, 10);
+    ctx.lineTo(-4, half + 2);
+    ctx.lineTo(-10, 2);
+    ctx.lineTo(-half - 2, -4);
+    ctx.lineTo(-6, -8);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 8) {
+    // Drone
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#04060f";
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = col;
+    ctx.fillRect(-half - 3, -2, 4, 4);
+    ctx.fillRect(half - 1, -2, 4, 4);
+    ctx.fillRect(-half - 2, -5, 2, 3);
+    ctx.fillRect(half, -5, 2, 3);
+  } else if (charId === 9) {
+    // Rune
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      const x = Math.cos(angle) * half;
+      const y = Math.sin(angle) * half;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#04060f";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-half * 0.5, 0);
+    ctx.lineTo(half * 0.5, 0);
+    ctx.moveTo(0, -half * 0.5);
+    ctx.lineTo(0, half * 0.5);
+    ctx.stroke();
+  } else if (charId === 10) {
+    // Hex
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      ctx.lineTo(Math.cos(angle) * half, Math.sin(angle) * half);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#04060f";
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      ctx.lineTo(Math.cos(angle) * half * 0.5, Math.sin(angle) * half * 0.5);
+    }
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 11) {
+    // Pulse
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.45 * (0.6 + Math.sin(frame * 0.15) * 0.4), 0, Math.PI * 2);
+    ctx.fill();
+  } else if (charId === 12) {
+    // Mirror
+    ctx.fillStyle = col;
+    ctx.fillRect(-half, -half, w, h);
+    ctx.fillStyle = "#04060f";
+    ctx.beginPath();
+    ctx.moveTo(-half, -half);
+    ctx.lineTo(half, half);
+    ctx.lineTo(-half, half);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 13) {
+    // Rocket
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(-half, -half + 3);
+    ctx.lineTo(half - 4, -half + 3);
+    ctx.quadraticCurveTo(half + 4, 0, half - 4, half - 3);
+    ctx.lineTo(-half, half - 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#ff4000";
+    ctx.fillRect(-half - 4, -4, 4, 8);
+  } else if (charId === 14) {
+    // Comet
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(-2, 0, half * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff8c30";
+    ctx.beginPath();
+    ctx.moveTo(-half * 0.4, -half * 0.6);
+    ctx.lineTo(-half - 6, 0);
+    ctx.lineTo(-half * 0.4, half * 0.6);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 15) {
+    // Spark
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(-2, -half - 2);
+    ctx.lineTo(half + 2, -2);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(half, half + 2);
+    ctx.lineTo(-half - 2, 2);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
+  } else if (charId === 16) {
+    // Halo
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, half * 0.9, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (charId === 17) {
+    // Wave
+    ctx.fillStyle = col;
+    ctx.fillRect(-half, -half, w, h);
+    ctx.strokeStyle = "#04060f";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let x = -half; x <= half; x += 2) {
+      const y = Math.sin((x * 0.25) + (frame * 0.15)) * (half * 0.5);
+      if (x === -half) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  } else {
+    // Catch-all
+    ctx.fillStyle = col;
+    ctx.fillRect(-half, -half, w, h);
+  }
+
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 0.65;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(-3, -half + 4, 3, 3);
+  ctx.fillRect(1, -half + 4, 3, 3);
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "rgba(255,255,255,0.32)";
+  ctx.fillRect(-half, -half, half * 0.55, half * 0.55);
+
+  ctx.restore();
+}
+
 // ─── Canvas draw ──────────────────────────────────────────────────────────────
 function drawGame(ctx: CanvasRenderingContext2D, gs: GS): void {
   const shx = gs.shake > 0 ? (Math.random() - 0.5) * 7 : 0;
@@ -763,113 +1036,11 @@ function drawGame(ctx: CanvasRenderingContext2D, gs: GS): void {
   if (gs.alive) {
     const cx = CHAR_X + CHAR_W / 2;
     const cy = gs.cy + CHAR_H / 2;
-    const half = CHAR_W / 2;
     const char = CHARS[gs.charId] ?? CHARS[0];
 
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate((gs.rot * Math.PI) / 180);
-
-    ctx.shadowColor = char.col;
-    ctx.shadowBlur = 28;
-
-    if (gs.charId === 1) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.arc(0, 0, half * 0.95, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.beginPath();
-      ctx.arc(-4, -4, half * 0.28, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (gs.charId === 2) {
-      ctx.fillStyle = char.col;
-      ctx.fillRect(-half + 2, -half + 2, CHAR_W - 4, CHAR_H - 4);
-      ctx.fillStyle = "#04060f";
-      ctx.fillRect(-half + 8, -half + 8, CHAR_W - 16, CHAR_H - 16);
-      ctx.fillStyle = char.col;
-      ctx.fillRect(-3, -half - 7, 6, 8);
-      ctx.fillRect(-3, -half + 2, 6, 3);
-    } else if (gs.charId === 3) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.moveTo(0, -half - 2);
-      ctx.quadraticCurveTo(half + 8, -2, 0, half + 4);
-      ctx.quadraticCurveTo(-half - 8, -2, 0, -half - 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "rgba(4,6,15,0.78)";
-      ctx.fillRect(-half + 6, -half + 6, CHAR_W - 12, CHAR_H - 12);
-      ctx.fillStyle = char.col;
-      ctx.fillRect(-half + 10, -half + 8, CHAR_W - 20, CHAR_H - 16);
-    } else if (gs.charId === 4) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.moveTo(0, -half - 2);
-      ctx.lineTo(half + 2, 6);
-      ctx.lineTo(-half - 2, 6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.beginPath();
-      ctx.moveTo(-2, -half + 2);
-      ctx.lineTo(6, 4);
-      ctx.lineTo(-4, 4);
-      ctx.closePath();
-      ctx.fill();
-    } else if (gs.charId === 5) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.moveTo(0, -half - 2);
-      ctx.lineTo(half + 4, 0);
-      ctx.lineTo(0, half + 2);
-      ctx.lineTo(-half - 4, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.22)";
-      ctx.fillRect(-5, -4, 10, 8);
-    } else if (gs.charId === 6) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.moveTo(-half + 2, -4);
-      ctx.lineTo(half - 2, -4);
-      ctx.lineTo(half - 8, 0);
-      ctx.lineTo(half - 2, 4);
-      ctx.lineTo(-half + 2, 4);
-      ctx.closePath();
-      ctx.fill();
-    } else if (gs.charId === 7) {
-      ctx.fillStyle = char.col;
-      ctx.beginPath();
-      ctx.moveTo(0, -half - 4);
-      ctx.lineTo(6, -8);
-      ctx.lineTo(half + 2, -4);
-      ctx.lineTo(10, 2);
-      ctx.lineTo(4, half + 2);
-      ctx.lineTo(0, 10);
-      ctx.lineTo(-4, half + 2);
-      ctx.lineTo(-10, 2);
-      ctx.lineTo(-half - 2, -4);
-      ctx.lineTo(-6, -8);
-      ctx.closePath();
-      ctx.fill();
-    } else {
-      ctx.fillStyle = char.col;
-      ctx.fillRect(-half, -half, CHAR_W, CHAR_H);
-      ctx.fillStyle = world.accent;
-      ctx.fillRect(-half, -half, CHAR_W, CHAR_H * 0.48);
-    }
-
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 0.65;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(-3, -half + 4, 3, 3);
-    ctx.fillRect(1, -half + 4, 3, 3);
-    ctx.globalAlpha = 1;
-
-    ctx.fillStyle = "rgba(255,255,255,0.32)";
-    ctx.fillRect(-half, -half, half * 0.55, half * 0.55);
-
+    drawCharacterShape(ctx, gs.charId, char.col, CHAR_W, CHAR_H, gs.rot, gs.frame, world.accent);
     ctx.restore();
   }
 
@@ -1229,30 +1400,78 @@ function GameOverScreen({
 }
 
 function CharacterPreview({ index, active }: { index: number; active?: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const ch = CHARS[index];
-  const size = 72;
-  const shell: React.CSSProperties = {
-    width: size,
-    height: size,
-    borderRadius: index === 1 ? "50%" : index === 2 ? "16px" : index === 3 ? "50% 50% 40% 40%" : index === 4 ? "20px 20px 34px 34px" : index === 5 ? "6px" : "10px",
-    background: `linear-gradient(135deg, ${ch.col}, rgba(255,255,255,0.18))`,
-    boxShadow: `0 0 22px ${ch.col}55, inset 0 0 16px rgba(255,255,255,0.18)`,
-    border: active ? `2px solid ${ch.col}` : "2px solid rgba(255,255,255,0.14)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#04060f",
-    fontSize: index === 1 ? "34px" : "30px",
-    fontWeight: 800,
-    transform: index === 4 ? "rotate(-8deg)" : "none",
-    position: "relative",
-  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 72, 72);
+    ctx.save();
+    ctx.translate(36, 36);
+    drawCharacterShape(ctx, index, ch.col, 26, 26, 0, 0, ch.col);
+    ctx.restore();
+  }, [index, ch]);
 
   return (
-    <div style={shell}>
-      {index < 2 && <span>{ch.icon}</span>}
+    <div
+      style={{
+        width: 72,
+        height: 72,
+        borderRadius: index === 1 ? "50%" : index === 2 ? "16px" : index === 3 ? "50% 50% 40% 40%" : index === 4 ? "20px 20px 34px 34px" : index === 5 ? "6px" : "10px",
+        background: active ? "rgba(0, 229, 255, 0.1)" : "rgba(255, 255, 255, 0.03)",
+        border: active ? `2px solid ${ch.col}` : "2px solid rgba(255,255,255,0.08)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      <canvas ref={canvasRef} width={72} height={72} />
     </div>
   );
+}
+
+function MiniCharacterPreview({ index, frame }: { index: number; frame: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ch = CHARS[index];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 80, 80);
+    ctx.save();
+    ctx.translate(40, 40);
+    drawCharacterShape(ctx, index, ch.col, 30, 30, frame * 2.2, frame, ch.col);
+    ctx.restore();
+  }, [index, ch, frame]);
+
+  return <canvas ref={canvasRef} width={80} height={80} style={{ filter: "drop-shadow(0 0 10px rgba(0,229,255,0.15))" }} />;
+}
+
+function MiniGridPreview({ index, col }: { index: number; col: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, 48, 48);
+    ctx.save();
+    ctx.translate(24, 24);
+    drawCharacterShape(ctx, index, col, 22, 22, -15, 0, col);
+    ctx.restore();
+  }, [index, col]);
+
+  return <canvas ref={canvasRef} width={48} height={48} />;
 }
 
 function ShopScreen({
@@ -1271,22 +1490,286 @@ function ShopScreen({
   onBack: () => void;
 }) {
   const [sel, setSel] = useState(0);
+  const [frame, setFrame] = useState(0);
+
+  useEffect(() => {
+    let animId = 0;
+    const loop = () => {
+      setFrame(f => f + 1);
+      animId = requestAnimationFrame(loop);
+    };
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   const ch = CHARS[sel];
   const isOwned = owned.has(sel);
   const isEquipped = equipped === sel;
   const canAfford = totalGems >= ch.price;
+  const bonus = getCharBonus(sel);
+
+  const rarityColors: Record<string, string> = {
+    Starter: "#4a6080",
+    Budget: "#7f8c8d",
+    Popular: "#ff2d78",
+    Elite: "#ffd700",
+    Special: "#00ff88",
+    Rare: "#9b5cff",
+    Legend: "#ff8c30",
+    Epic: "#ff3040",
+    Mythic: "#ff7bff",
+  };
+  const rarityCol = rarityColors[ch.rarity] || "#00e5ff";
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="absolute inset-0 flex flex-col"
-      style={{ background: "#04060f" }}
+      className="absolute inset-0 flex flex-col justify-between p-6"
+      style={{ background: "rgba(4,6,15,0.92)", backdropFilter: "blur(3px)" }}
     >
-      {/* Minimal implementation omitted in this re-write: keep original file in repo when running. */}
-      <div style={{ color: "white", padding: 24 }}>
-        Shop loading…
+      <div className="flex justify-between items-center mb-4">
+        <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em" }}>
+          CYBER SHOP
+        </div>
+        <div style={{ ...raj, color: "#4a6080", fontSize: "14px" }}>
+          TOTAL GEMS: <span style={{ color: "#ffd700", fontWeight: 700 }}>◆ {totalGems.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-1 gap-6 min-h-0 overflow-hidden mb-4">
+        {/* Left Column: Specs & Mini-canvas Preview */}
+        <div
+          className="flex flex-col items-center justify-between p-5"
+          style={{
+            flex: "0 0 250px",
+            background: "#080e21",
+            border: "1px solid rgba(0,229,255,0.14)",
+            borderRadius: "8px",
+            overflowY: "auto",
+          }}
+        >
+          <div className="flex flex-col items-center w-full">
+            <span
+              style={{
+                ...orb,
+                fontSize: "9px",
+                fontWeight: 700,
+                color: rarityCol,
+                border: `1px solid ${rarityCol}33`,
+                padding: "3px 8px",
+                borderRadius: "999px",
+                letterSpacing: "0.15em",
+                marginBottom: "12px",
+              }}
+            >
+              {ch.rarity.toUpperCase()}
+            </span>
+
+            <div
+              style={{
+                width: 90,
+                height: 90,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(4,6,15,0.5)",
+                border: "1px solid rgba(0,229,255,0.08)",
+                borderRadius: "50%",
+                boxShadow: `0 0 20px ${ch.col}1a`,
+                marginBottom: "12px",
+              }}
+            >
+              <MiniCharacterPreview index={sel} frame={frame} />
+            </div>
+
+            <div style={{ ...orb, fontSize: "18px", fontWeight: 700, color: "#c8e6ff", letterSpacing: "0.08em", marginBottom: "4px" }}>
+              {ch.name}
+            </div>
+            
+            <div style={{ ...raj, fontSize: "12px", color: "#4a6080", textAlign: "center", marginBottom: "12px", lineHeight: "1.3" }}>
+              {ch.description}
+            </div>
+
+            <div style={{ height: "1px", width: "80%", background: "rgba(0,229,255,0.08)", marginBottom: "12px" }} />
+
+            <div className="w-full flex flex-col gap-2">
+              <div style={{ ...orb, fontSize: "9px", color: "#4a6080", letterSpacing: "0.15em" }}>STAT MODIFIERS</div>
+              
+              {[
+                { label: "SPEED BOOST", val: bonus.speed, max: 0.15, text: `+${Math.round(bonus.speed * 100)}%` },
+                { label: "GRAVITY COEFFICIENT", val: 1 - bonus.gravity, max: 0.2, text: bonus.gravity < 1 ? `-${Math.round((1 - bonus.gravity) * 100)}% (Float)` : `${Math.round(bonus.gravity * 100)}%` },
+                { label: "FLIP ACCEL Force", val: bonus.flipVel - 1, max: 0.2, text: `+${Math.round((bonus.flipVel - 1) * 100)}%` },
+                { label: "TRAIL PARTICLES", val: bonus.trail - 1, max: 0.3, text: `+${Math.round((bonus.trail - 1) * 100)}%` },
+              ].map(stat => (
+                <div key={stat.label}>
+                  <div className="flex justify-between" style={{ ...raj, fontSize: "11px", color: "#6f86a8", marginBottom: "2px" }}>
+                    <span>{stat.label}</span>
+                    <span style={{ color: "#c8e6ff" }}>{stat.text}</span>
+                  </div>
+                  <div style={{ height: "4px", background: "rgba(255,255,255,0.05)", borderRadius: "2px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        background: ch.col,
+                        width: `${Math.max(10, Math.min(100, (Math.abs(stat.val) / (stat.max || 1)) * 100))}%`,
+                        boxShadow: `0 0 6px ${ch.col}`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="w-full mt-4">
+            {isEquipped ? (
+              <button
+                disabled
+                style={{
+                  ...orb,
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  background: "rgba(0,229,255,0.08)",
+                  color: "#2a3a55",
+                  border: "1px solid rgba(0,229,255,0.08)",
+                }}
+              >
+                EQUIPPED
+              </button>
+            ) : isOwned ? (
+              <button
+                onClick={() => onEquip(sel)}
+                style={{
+                  ...orb,
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  background: "#00e5ff",
+                  color: "#04060f",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 0 16px rgba(0,229,255,0.35)",
+                }}
+              >
+                EQUIP SKIN
+              </button>
+            ) : (
+              <button
+                onClick={() => onBuy(sel)}
+                disabled={!canAfford}
+                style={{
+                  ...orb,
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  background: canAfford ? "#ffd700" : "rgba(255,255,255,0.05)",
+                  color: canAfford ? "#04060f" : "#4a6080",
+                  border: "none",
+                  cursor: canAfford ? "pointer" : "not-allowed",
+                  boxShadow: canAfford ? "0 0 16px rgba(255,215,0,0.35)" : "none",
+                }}
+              >
+                BUY FOR ◆ {ch.price}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Interactive Character Grid */}
+        <div
+          className="flex-1 p-4"
+          style={{
+            background: "#060b1d",
+            border: "1px solid rgba(0,229,255,0.08)",
+            borderRadius: "8px",
+            overflowY: "auto",
+          }}
+        >
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
+            {CHARS.map((char, idx) => {
+              const ownedSelf = owned.has(idx);
+              const equippedSelf = equipped === idx;
+              const selectedSelf = sel === idx;
+
+              return (
+                <button
+                  key={char.name}
+                  onClick={() => setSel(idx)}
+                  style={{
+                    aspectRatio: "1/1",
+                    background: selectedSelf ? "rgba(0,229,255,0.12)" : "rgba(8,14,33,0.65)",
+                    border: equippedSelf
+                      ? `2px solid ${char.col}`
+                      : selectedSelf
+                      ? "2px solid #00e5ff"
+                      : "2px solid rgba(0,229,255,0.08)",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.1s ease",
+                    padding: 0,
+                  }}
+                >
+                  <div style={{ transform: "scale(0.85)" }}>
+                    <MiniGridPreview index={idx} col={char.col} />
+                  </div>
+
+                  {ownedSelf && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        fontSize: "8px",
+                        color: equippedSelf ? char.col : "#49ffaa",
+                        textShadow: "0 0 4px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      ✓
+                    </span>
+                  )}
+
+                  {!ownedSelf && (
+                    <span
+                      style={{
+                        ...raj,
+                        position: "absolute",
+                        bottom: 4,
+                        fontSize: "8px",
+                        fontWeight: 700,
+                        color: "#ffd700",
+                        background: "rgba(4,6,15,0.75)",
+                        padding: "1px 4px",
+                        borderRadius: "2px",
+                      }}
+                    >
+                      ◆{char.price}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <NeonBtn onClick={onBack}>
+          BACK
+        </NeonBtn>
       </div>
     </motion.div>
   );
@@ -1297,21 +1780,187 @@ function ScoresScreen({
   lastScore,
   totalGems,
   gamesPlayed,
+  scoreHistory,
+  onResetProgress,
   onBack,
 }: {
   highScore: number;
   lastScore: number;
   totalGems: number;
   gamesPlayed: number;
+  scoreHistory: number[];
+  onResetProgress: () => void;
   onBack: () => void;
 }) {
+  const [confirmReset, setConfirmReset] = useState(false);
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(4,6,15,0.92)" }}>
-      <div style={{ width: "100%", maxWidth: "360px", padding: "24px", textAlign: "center" }}>
-        <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "18px" }}>SCORES</div>
-        <button onClick={onBack} style={{ ...orb, width: "100%", padding: "14px", fontSize: "13px", fontWeight: 700, letterSpacing: "0.16em", background: "#00e5ff", color: "#04060f", border: "none", cursor: "pointer", clipPath: "polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%)", boxShadow: "0 0 26px rgba(0,229,255,0.28)" }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.28 }}
+      className="absolute inset-0 flex flex-col justify-between p-6"
+      style={{ background: "rgba(4,6,15,0.92)", backdropFilter: "blur(3px)" }}
+    >
+      <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "16px" }}>
+        ARCADE LEADERBOARD & STATS
+      </div>
+
+      <div className="flex flex-1 gap-6 min-h-0 overflow-hidden mb-6">
+        {/* Left Side: Stats Summary */}
+        <div
+          className="flex flex-col justify-between p-5"
+          style={{
+            flex: "0 0 250px",
+            background: "#080e21",
+            border: "1px solid rgba(0,229,255,0.14)",
+            borderRadius: "8px",
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <div style={{ ...orb, fontSize: "10px", color: "#4a6080", letterSpacing: "0.15em" }}>SUMMARY</div>
+
+            {[
+              { label: "PERSONAL BEST", val: highScore, color: "#ffd700" },
+              { label: "LAST RUN SCORE", val: lastScore, color: "#00e5ff" },
+              { label: "GEMS COLLECTED", val: `◆ ${totalGems.toLocaleString()}`, color: "#ffd28a" },
+              { label: "RUNS INITIATED", val: gamesPlayed, color: "#4cc7ff" },
+            ].map(item => (
+              <div key={item.label} style={{ background: "rgba(4,6,15,0.4)", padding: "12px", borderLeft: `3px solid ${item.color}` }}>
+                <div style={{ ...raj, fontSize: "10px", color: "#4a6080", letterSpacing: "0.1em", marginBottom: "4px" }}>{item.label}</div>
+                <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#c8e6ff" }}>{item.val}</div>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            {confirmReset ? (
+              <div className="flex flex-col gap-2">
+                <div style={{ ...raj, fontSize: "11px", color: "#ff3040", fontWeight: 500 }}>PERMANENTLY RESET ALL PROGRESS?</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      onResetProgress();
+                      setConfirmReset(false);
+                    }}
+                    style={{
+                      ...orb,
+                      flex: 1,
+                      padding: "8px",
+                      background: "#ff3040",
+                      color: "#ffffff",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    YES
+                  </button>
+                  <button
+                    onClick={() => setConfirmReset(false)}
+                    style={{
+                      ...orb,
+                      flex: 1,
+                      padding: "8px",
+                      background: "rgba(255,255,255,0.1)",
+                      color: "#c8e6ff",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    NO
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmReset(true)}
+                style={{
+                  ...orb,
+                  width: "100%",
+                  padding: "10px",
+                  background: "transparent",
+                  color: "#ff3040",
+                  border: "1px solid rgba(255,48,64,0.22)",
+                  fontSize: "9px",
+                  letterSpacing: "0.1em",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.12s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(255,48,64,0.1)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                RESET DATA
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right Side: Scrollable Run History */}
+        <div
+          className="flex-1 p-4"
+          style={{
+            background: "#060b1d",
+            border: "1px solid rgba(0,229,255,0.08)",
+            borderRadius: "8px",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ ...orb, fontSize: "10px", color: "#4a6080", letterSpacing: "0.15em", marginBottom: "12px" }}>
+            RUN LOGS (LAST 20 ATTEMPTS)
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2">
+            {scoreHistory.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-center" style={{ ...raj, color: "#4a6080", fontSize: "14px" }}>
+                No score records found.<br />Initiate a run to populate this log!
+              </div>
+            ) : (
+              scoreHistory.map((score, index) => {
+                const isBest = score === highScore && score > 0;
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      background: "rgba(8,14,33,0.7)",
+                      border: isBest ? "1px solid rgba(255,215,0,0.3)" : "1px solid rgba(0,229,255,0.05)",
+                      padding: "10px 18px",
+                      borderRadius: "6px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ ...orb, color: "#4a6080", fontSize: "11px" }}>RUN #{scoreHistory.length - index}</span>
+                      {isBest && (
+                        <span style={{ ...orb, color: "#ffd700", fontSize: "9px", letterSpacing: "0.1em" }}>★ PERSONAL BEST</span>
+                      )}
+                    </div>
+                    <span style={{ ...orb, fontSize: "18px", fontWeight: 700, color: isBest ? "#ffd700" : "#c8e6ff" }}>
+                      {score.toString().padStart(4, "0")}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <NeonBtn onClick={onBack}>
           BACK
-        </button>
+        </NeonBtn>
       </div>
     </motion.div>
   );
@@ -1322,20 +1971,28 @@ function SettingsScreen({
   motionEnabled,
   sfxEnabled,
   sfxVolume,
+  musicEnabled,
+  musicVolume,
   onToggleHint,
   onToggleMotion,
   onToggleSfx,
   onToggleSfxVolume,
+  onToggleMusic,
+  onToggleMusicVolume,
   onBack,
 }: {
   showHint: boolean;
   motionEnabled: boolean;
   sfxEnabled: boolean;
   sfxVolume: number;
+  musicEnabled: boolean;
+  musicVolume: number;
   onToggleHint: () => void;
   onToggleMotion: () => void;
   onToggleSfx: () => void;
   onToggleSfxVolume: (value: number) => void;
+  onToggleMusic: () => void;
+  onToggleMusicVolume: (value: number) => void;
   onBack: () => void;
 }) {
   const motionProps = motionEnabled
@@ -1352,15 +2009,15 @@ function SettingsScreen({
 
   return (
     <motion.div {...motionProps} className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(4,6,15,0.92)" }}>
-      <div style={{ width: "100%", maxWidth: "360px", padding: "24px", textAlign: "center" }}>
+      <div style={{ width: "100%", maxWidth: "420px", padding: "24px", textAlign: "center" }}>
         <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "18px" }}>SETTINGS</div>
-        <div style={{ display: "grid", gap: "14px", marginBottom: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "24px" }}>
           {[
             { label: "Tap Hint", value: showHint, onToggle: onToggleHint },
             { label: "Motion Effects", value: motionEnabled, onToggle: onToggleMotion },
           ].map(item => (
-            <div key={item.label} style={{ background: "#080e21", padding: "16px", border: "1px solid rgba(0,229,255,0.12)", borderRadius: "14px", textAlign: "left" }}>
-              <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>{item.label}</div>
+            <div key={item.label} style={{ background: "#080e21", padding: "16px", border: "1px solid rgba(0,229,255,0.12)", borderRadius: "14px", textAlign: "left", gridColumn: "span 2" }}>
+              <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>{item.label.toUpperCase()}</div>
               <button
                 onClick={item.onToggle}
                 style={{
@@ -1382,14 +2039,15 @@ function SettingsScreen({
             </div>
           ))}
 
+          {/* SFX volume */}
           <div style={{ background: "#080e21", padding: "16px", border: "1px solid rgba(0,229,255,0.12)", borderRadius: "14px", textAlign: "left" }}>
-            <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>SFX</div>
+            <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>SOUND EFFECTS (SFX)</div>
             <button
               onClick={onToggleSfx}
               style={{
                 ...orb,
-                padding: "12px 18px",
-                fontSize: "12px",
+                padding: "12px 14px",
+                fontSize: "11px",
                 fontWeight: 700,
                 width: "100%",
                 textAlign: "left",
@@ -1410,7 +2068,39 @@ function SettingsScreen({
               onChange={e => onToggleSfxVolume(Number((e.target as HTMLInputElement).value))}
               style={{ width: "100%", marginTop: "12px", accentColor: "#00e5ff" }}
             />
-            <div style={{ textAlign: "center", color: "#4a6080", fontSize: "13px", marginTop: "8px" }}>{sfxVolume}</div>
+            <div style={{ textAlign: "center", color: "#4a6080", fontSize: "11px", marginTop: "8px", ...orb }}>VOL: {sfxVolume}%</div>
+          </div>
+
+          {/* Music volume */}
+          <div style={{ background: "#080e21", padding: "16px", border: "1px solid rgba(0,229,255,0.12)", borderRadius: "14px", textAlign: "left" }}>
+            <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>BGM SYNTH beats</div>
+            <button
+              onClick={onToggleMusic}
+              style={{
+                ...orb,
+                padding: "12px 14px",
+                fontSize: "11px",
+                fontWeight: 700,
+                width: "100%",
+                textAlign: "left",
+                background: musicEnabled ? "#00e5ff" : "rgba(255,255,255,0.05)",
+                color: musicEnabled ? "#04060f" : "#4a6080",
+                border: "none",
+                cursor: "pointer",
+                boxShadow: musicEnabled ? "0 0 20px rgba(0,229,255,0.25)" : "none",
+              }}
+            >
+              {musicEnabled ? "ENABLED" : "DISABLED"}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={musicVolume}
+              onChange={e => onToggleMusicVolume(Number((e.target as HTMLInputElement).value))}
+              style={{ width: "100%", marginTop: "12px", accentColor: "#00e5ff" }}
+            />
+            <div style={{ textAlign: "center", color: "#4a6080", fontSize: "11px", marginTop: "8px", ...orb }}>VOL: {musicVolume}%</div>
           </div>
         </div>
 
@@ -1440,28 +2130,66 @@ function SettingsScreen({
 
 function AboutScreen({ onBack }: { onBack: () => void }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }} className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(4,6,15,0.92)" }}>
-      <div style={{ width: "100%", maxWidth: "400px", padding: "24px", textAlign: "center" }}>
-        <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "18px" }}>ABOUT</div>
-        <button
-          onClick={onBack}
-          style={{
-            ...orb,
-            width: "100%",
-            padding: "14px",
-            fontSize: "13px",
-            fontWeight: 700,
-            letterSpacing: "0.16em",
-            background: "#00e5ff",
-            color: "#04060f",
-            border: "none",
-            cursor: "pointer",
-            clipPath: "polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%)",
-            boxShadow: "0 0 26px rgba(0,229,255,0.28)",
-          }}
-        >
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.28 }}
+      className="absolute inset-0 flex flex-col justify-between p-6"
+      style={{ background: "rgba(4,6,15,0.92)", backdropFilter: "blur(3px)" }}
+    >
+      <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "16px" }}>
+        ABOUT & SYSTEM SPECS
+      </div>
+
+      <div
+        className="flex-1 p-5 pr-3 overflow-y-auto mb-6"
+        style={{
+          background: "#080e21",
+          border: "1px solid rgba(0,229,255,0.14)",
+          borderRadius: "8px",
+          textAlign: "left",
+        }}
+      >
+        <div className="mb-6">
+          <div style={{ ...orb, fontSize: "11px", color: "#00e5ff", letterSpacing: "0.12em", marginBottom: "8px" }}>INTERFACE CONTROLS</div>
+          <div style={{ ...raj, fontSize: "13px", color: "#6f86a8", lineHeight: "1.6" }}>
+            <span style={{ color: "#c8e6ff", fontWeight: 600 }}>[SPACEBAR] / [UP ARROW] / [TAP CANVAS]</span>: Triggers a gravity flip. Instantly reverses your vertical gravity coefficient, sending you flying to the opposite side of the screen.
+            <br />
+            <span style={{ color: "#c8e6ff", fontWeight: 600 }}>[ESCAPE]</span>: Pauses/Resumes active gameplay.
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div style={{ ...orb, fontSize: "11px", color: "#00e5ff", letterSpacing: "0.12em", marginBottom: "8px" }}>MECHANICS & PERKS</div>
+          <div style={{ ...raj, fontSize: "13px", color: "#6f86a8", lineHeight: "1.6" }}>
+            Collect glowing <span style={{ color: "#ffd700", fontWeight: 600 }}>Gems (◆)</span> during runs to unlock rare and legendary character cores in the shop.
+            <br />
+            Different cores possess distinct engineering stats:
+            <ul style={{ listStyleType: "disc", paddingLeft: "20px", marginTop: "4px" }}>
+              <li><span style={{ color: "#c8e6ff" }}>Speed Multiplier</span>: Adjusts the forward speed scaling factor.</li>
+              <li><span style={{ color: "#c8e6ff" }}>Gravity Coefficient</span>: Lower coefficients yield lighter, floatier drift.</li>
+              <li><span style={{ color: "#c8e6ff" }}>Flip Accel Force</span>: Dictates how fast you accelerate during a gravity reversal.</li>
+              <li><span style={{ color: "#c8e6ff" }}>Trail Particles</span>: Increases size and lifetime of aesthetic neon exhaust trails.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mb-2">
+          <div style={{ ...orb, fontSize: "11px", color: "#00e5ff", letterSpacing: "0.12em", marginBottom: "8px" }}>PROJECT CREDITS</div>
+          <div style={{ ...raj, fontSize: "13px", color: "#6f86a8", lineHeight: "1.6" }}>
+            Original Concept: Figma Community Design
+            <br />
+            Arcade UI & Logic Overhaul: Antigravity AI
+            <br />
+            Co-creator / Lead Architect: <span style={{ color: "#ffd700", fontWeight: 700, textShadow: "0 0 10px rgba(255,215,0,0.3)" }}>Josh C.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <NeonBtn onClick={onBack}>
           BACK
-        </button>
+        </NeonBtn>
       </div>
     </motion.div>
   );
@@ -1486,6 +2214,8 @@ export default function App() {
   const [motionEnabled, setMotionEnabled] = useState(initialProgress.motionEnabled);
   const [sfxEnabled, setSfxEnabled] = useState(initialProgress.sfxEnabled);
   const [sfxVolume, setSfxVolume] = useState(initialProgress.sfxVolume);
+  const [musicEnabled, setMusicEnabled] = useState(initialProgress.musicEnabled ?? true);
+  const [musicVolume, setMusicVolume] = useState(initialProgress.musicVolume ?? 50);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1553,6 +2283,86 @@ export default function App() {
     }
   }, []);
 
+  const startBgMusic = useCallback(() => {
+    if (!musicEnabled || typeof window === "undefined") return;
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+
+    stopBgMusic();
+
+    const musicGain = ctx.createGain();
+    const volMul = Math.max(0, Math.min(1, musicVolume / 100));
+    musicGain.gain.setValueAtTime(volMul * 0.14, ctx.currentTime);
+    musicGain.connect(ctx.destination);
+    musicGainRef.current = musicGain;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(600, ctx.currentTime);
+    filter.connect(musicGain);
+    musicFilterRef.current = filter;
+
+    const bassline = [110, 110, 130.81, 130.81, 98, 98, 87.31, 87.31];
+    let step = 0;
+
+    const playBassNote = () => {
+      if (ctx.state === "suspended") return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const noteGain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      const freq = bassline[step % bassline.length];
+      osc.frequency.setValueAtTime(freq, now);
+
+      noteGain.gain.setValueAtTime(0, now);
+      noteGain.gain.linearRampToValueAtTime(0.6, now + 0.012);
+      noteGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+      osc.connect(noteGain);
+      noteGain.connect(filter);
+      
+      osc.start(now);
+      osc.stop(now + 0.24);
+
+      osc.onended = () => {
+        noteGain.disconnect();
+        osc.disconnect();
+      };
+
+      if (step % 4 === 2) {
+        const arpOsc = ctx.createOscillator();
+        const arpGain = ctx.createGain();
+        arpOsc.type = "triangle";
+        const arpFreq = freq * 3.0; 
+        arpOsc.frequency.setValueAtTime(arpFreq, now);
+
+        arpGain.gain.setValueAtTime(0, now);
+        arpGain.gain.linearRampToValueAtTime(0.18, now + 0.005);
+        arpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+        arpOsc.connect(arpGain);
+        arpGain.connect(musicGain);
+
+        arpOsc.start(now + 0.04);
+        arpOsc.stop(now + 0.18);
+
+        arpOsc.onended = () => {
+          arpGain.disconnect();
+          arpOsc.disconnect();
+        };
+      }
+
+      step++;
+    };
+
+    musicIntervalRef.current = window.setInterval(playBassNote, 250);
+  }, [ensureAudioCtx, musicEnabled, musicVolume, stopBgMusic]);
+
   const playSoundEffect = useCallback(
     (type: "click" | "flip" | "gameover" | "toggle" | "gem") => {
       if (!sfxEnabled) return;
@@ -1613,10 +2423,122 @@ export default function App() {
     [ensureAudioCtx, sfxEnabled, sfxVolume]
   );
 
+  // Resize handler
   useEffect(() => {
-    stopBgMusic();
+    const handleResize = () => {
+      const scale = window.devicePixelRatio || 1;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      
+      if (canvasRef.current) {
+        canvasRef.current.width = w * scale;
+        canvasRef.current.height = h * scale;
+      }
+      if (bgCanvasRef.current) {
+        bgCanvasRef.current.width = w * scale;
+        bgCanvasRef.current.height = h * scale;
+      }
+    };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isGame = screen === "playing" || screen === "paused";
+
+  // Menu Background Animation
+  useEffect(() => {
+    if (isGame) return;
+    const canvas = bgCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let active = true;
+    let frame = 0;
+
+    const render = () => {
+      if (!active) return;
+      frame++;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = "#04060f";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+      for (let i = 0; i < 40; i++) {
+        const sx = ((Math.sin(i * 12.3) + 1) / 2) * w;
+        const sy = (((Math.cos(i * 45.6) + 1) / 2) * h + frame * 0.15) % h;
+        const r = ((Math.sin(i * 99.8) + 1) / 2) * 1.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const theme = getWorldForScore(highScore);
+      ctx.strokeStyle = theme.grid;
+      ctx.lineWidth = 1;
+      
+      const horizon = h * 0.45;
+      const numLines = 18;
+      for (let i = 0; i <= numLines; i++) {
+        const xStart = (i / numLines) * w;
+        ctx.beginPath();
+        ctx.moveTo(xStart, h);
+        ctx.lineTo(w / 2 + (xStart - w / 2) * 0.1, horizon);
+        ctx.stroke();
+      }
+
+      const gridCount = 9;
+      const speed = 0.8;
+      for (let i = 0; i < gridCount; i++) {
+        const offset = ((frame * speed) % 60) / 60;
+        const ratio = (i + offset) / gridCount;
+        const y = horizon + (h - horizon) * Math.pow(ratio, 2);
+        
+        ctx.globalAlpha = ratio * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1.0;
+
+      const grad = ctx.createLinearGradient(0, horizon - 40, 0, horizon + 20);
+      grad.addColorStop(0, "rgba(4, 6, 15, 1)");
+      grad.addColorStop(0.5, theme.accent + "18");
+      grad.addColorStop(1, "rgba(4, 6, 15, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, horizon - 40, w, 80);
+
+      const pulse = 0.5 + Math.sin(frame * 0.03) * 0.15;
+      ctx.fillStyle = theme.glow;
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.35 + pulse * 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      requestAnimationFrame(render);
+    };
+
+    render();
+    return () => {
+      active = false;
+    };
+  }, [screen, isGame, highScore]);
+
+  // Background Music controller hook
+  useEffect(() => {
+    if (musicEnabled && screen !== "paused") {
+      startBgMusic();
+    } else {
+      stopBgMusic();
+    }
     return () => stopBgMusic();
-  }, [stopBgMusic]);
+  }, [screen, musicEnabled, musicVolume, startBgMusic, stopBgMusic]);
 
   useEffect(() => {
     equippedCharRef.current = equippedChar;
@@ -1636,6 +2558,8 @@ export default function App() {
       motionEnabled,
       sfxEnabled,
       sfxVolume,
+      musicEnabled,
+      musicVolume,
     });
   }, [
     highScore,
@@ -1649,6 +2573,8 @@ export default function App() {
     motionEnabled,
     sfxEnabled,
     sfxVolume,
+    musicEnabled,
+    musicVolume,
   ]);
 
   const syncActiveChar = useCallback(() => {
@@ -1664,6 +2590,18 @@ export default function App() {
     setEquippedChar(idx);
     if (gsRef.current) gsRef.current.charId = idx;
   }, []);
+
+  const resetProgress = useCallback(() => {
+    setHighScore(0);
+    setTotalGems(0);
+    setLastScore(0);
+    setLastGems(0);
+    setScoreHistory([]);
+    setOwnedChars(new Set([0]));
+    setEquippedChar(0);
+    applyEquippedChar(0);
+    if (sfxEnabled) playSoundEffect("toggle");
+  }, [applyEquippedChar, playSoundEffect, sfxEnabled]);
 
   const flip = useCallback(() => {
     const gs = gsRef.current;
@@ -1771,6 +2709,9 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === "Space" || e.code === "ArrowUp") {
         e.preventDefault();
+        if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+          audioCtxRef.current.resume();
+        }
         if (screenRef.current === "playing") flip();
         if (screenRef.current === "paused") setScreen("playing");
       }
@@ -1803,7 +2744,6 @@ export default function App() {
     [applyEquippedChar, ownedChars, playSoundEffect, sfxEnabled]
   );
 
-  const isGame = screen === "playing" || screen === "paused";
   const currentWorld = getWorldForScore(liveScore);
   const nextWorldThreshold = getNextWorldThreshold(liveScore);
 
@@ -1835,6 +2775,9 @@ export default function App() {
             ? e => {
                 e.preventDefault();
                 (e.currentTarget as HTMLCanvasElement).setPointerCapture?.(e.pointerId);
+                if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+                  audioCtxRef.current.resume();
+                }
                 flip();
               }
             : undefined
@@ -1945,7 +2888,15 @@ export default function App() {
       )}
 
       {screen === "scores" && (
-        <ScoresScreen highScore={highScore} lastScore={lastScore} totalGems={totalGems} gamesPlayed={scoreHistory.length} onBack={() => setScreen("menu")} />
+        <ScoresScreen
+          highScore={highScore}
+          lastScore={lastScore}
+          totalGems={totalGems}
+          gamesPlayed={scoreHistory.length}
+          scoreHistory={scoreHistory}
+          onResetProgress={resetProgress}
+          onBack={() => setScreen("menu")}
+        />
       )}
 
       {screen === "about" && <AboutScreen onBack={() => {
@@ -1959,6 +2910,8 @@ export default function App() {
           motionEnabled={motionEnabled}
           sfxEnabled={sfxEnabled}
           sfxVolume={sfxVolume}
+          musicEnabled={musicEnabled}
+          musicVolume={musicVolume}
           onToggleHint={() => {
             playSoundEffect("toggle");
             setShowHint(enabled => !enabled);
@@ -1972,6 +2925,11 @@ export default function App() {
             setSfxEnabled(enabled => !enabled);
           }}
           onToggleSfxVolume={value => setSfxVolume(value)}
+          onToggleMusic={() => {
+            playSoundEffect("toggle");
+            setMusicEnabled(enabled => !enabled);
+          }}
+          onToggleMusicVolume={value => setMusicVolume(value)}
           onBack={() => {
             playSoundEffect("click");
             setScreen(settingsReturnScreen);
