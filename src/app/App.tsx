@@ -1910,10 +1910,12 @@ export default function App() {
                 }}
                 onClick={() => setScreen("paused")}
               >
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10, padding: "0 10px" }}>
-                  <span style={{ display: "block", fontSize: 12, fontWeight: 900, color: "#00e5ff", textShadow: "0 0 14px rgba(0,229,255,0.35)" }}>PAUSE</span>
-                  <span style={{ display: "block", width: 1, height: 22, background: "rgba(0,229,255,0.25)" }} />
-                  <span style={{ display: "block", fontSize: 12, fontWeight: 900, color: "rgba(200,230,255,0.9)" }}>GAME</span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: 0 }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 6, height: 18, background: "#00e5ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,229,255,0.35)" }} />
+                    <div style={{ width: 6, height: 18, background: "rgba(200,230,255,0.9)", borderRadius: 2 }} />
+                  </div>
+                  <div style={{ width: 26, height: 2, background: "rgba(0,229,255,0.25)", borderRadius: 999 }} />
                 </div>
               </button>
             </div>
