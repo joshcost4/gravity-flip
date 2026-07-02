@@ -1849,9 +1849,9 @@ export default function App() {
           cursor: screen === "playing" ? "pointer" : "default",
           touchAction: "none",
         }}
-        onClick={screen === "playing" ? flip : undefined}
+        onClick={undefined}
         onPointerDown={screen === "playing" ? (e) => {
-          // Pointer/touch events are more reliable on mobile than onClick.
+          // One-tap behavior: flip on pointer down only.
           e.preventDefault();
           (e.currentTarget as HTMLCanvasElement).setPointerCapture?.(e.pointerId);
           flip();
