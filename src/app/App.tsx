@@ -1325,11 +1325,25 @@ function SettingsScreen({ showHint, motionEnabled, sfxEnabled, sfxVolume, onTogg
               >
                 {item.value ? "ENABLED" : "DISABLED"}
               </button>
+              <div
+                style={{
+                  ...raj,
+                  marginTop: "8px",
+                  color: "#4a6080",
+                  fontSize: "9px",
+                  letterSpacing: "0.22em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Tap hint: {item.value ? "ON" : "OFF"}
+              </div>
             </div>
           ))}
+
           <div style={{ background: "#080e21", padding: "16px", border: "1px solid rgba(0,229,255,0.12)", borderRadius: "14px", textAlign: "left" }}>
             <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>SFX</div>
             <button
+
               onClick={onToggleSfx}
               style={{
                 ...orb, padding: "12px 18px", fontSize: "12px", fontWeight: 700,
