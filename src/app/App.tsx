@@ -1297,9 +1297,15 @@ function SettingsScreen({ showHint, motionEnabled, sfxEnabled, sfxVolume, onTogg
   showHint: boolean; motionEnabled: boolean; sfxEnabled: boolean; sfxVolume: number;
   onToggleHint: () => void; onToggleMotion: () => void; onToggleSfx: () => void; onToggleSfxVolume: (value: number) => void; onBack: () => void;
 }) {
+  const motionProps = motionEnabled ? {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.28 },
+  } : { initial: false, animate: false, transition: false } as const;
+
   return (
     <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }}
+      {...motionProps}
       className="absolute inset-0 flex items-center justify-center"
       style={{ background: "rgba(4,6,15,0.92)" }}
     >
