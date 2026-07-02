@@ -909,7 +909,7 @@ function MenuScreen({ highScore, totalGems, gamesPlayed, sfxEnabled, onPlay, onS
   );
 }
 
-function PauseOverlay({ onResume, onRestart, onHome, onSettings }: {
+function PauseOverlay({ onResume, onRestart, onHome, onSettings }:{
   onResume: () => void; onRestart: () => void; onHome: () => void; onSettings: () => void;
 }) {
   return (
@@ -925,7 +925,7 @@ function PauseOverlay({ onResume, onRestart, onHome, onSettings }: {
         }}
       >
         <div style={{ ...orb, fontSize: "22px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.22em", marginBottom: "32px" }}>
-          PAUSED
+          PAUSE
         </div>
         <div className="flex flex-col gap-2">
           {[
@@ -961,6 +961,7 @@ function PauseOverlay({ onResume, onRestart, onHome, onSettings }: {
     </div>
   );
 }
+
 
 function GameOverScreen({ score, best, gems, onPlay, onHome, onShop }: {
   score: number; best: number; gems: number;
