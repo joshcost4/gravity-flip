@@ -1390,7 +1390,7 @@ function AboutScreen({ onBack }: { onBack: () => void }) {
         <div style={{ ...raj, color: "#4a6080", fontSize: "9px", letterSpacing: "0.22em", marginBottom: "10px" }}>CREDITS</div>
         <div style={{ ...orb, color: "#c8e6ff", fontSize: "12px", lineHeight: 1.6, marginBottom: "24px" }}>
           Created by Josh C.<br />
-          Designed with a polished arcade feel, vibrant visuals, and a rewarding progression loop.
+
         </div>
         <button
           onClick={onBack}
