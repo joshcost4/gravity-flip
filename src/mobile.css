@@ -1,4 +1,4 @@
-/* Force mobile-friendly landscape rendering for Gravity Flip */
+/* Fullscreen layout for mobile + desktop */
 
 html, body {
   height: 100%;
@@ -7,19 +7,10 @@ html, body {
   overflow: hidden;
 }
 
-/* Rotate to landscape on mobile if the browser is portrait-oriented */
-@media (orientation: portrait) {
-  .gravityflip-root {
-    width: 100vh;
-    height: 100vw;
-    transform: rotate(90deg);
-    transform-origin: center center;
-  }
-}
-
-@media (orientation: landscape) {
-  .gravityflip-root {
-    transform: none;
-  }
+/* App root should always fill viewport */
+.gravityflip-root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
