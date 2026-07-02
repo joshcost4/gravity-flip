@@ -1566,15 +1566,16 @@ export default function App() {
     });
   }, [highScore, totalGems, lastScore, lastGems, scoreHistory, ownedChars, equippedChar, showHint, motionEnabled, sfxEnabled, sfxVolume]);
 
-  // Scale to fit viewport
+  // Scale to *fill* viewport (avoid letterboxing / black bars)
   useEffect(() => {
     const upd = () => {
-      setScale(Math.min(window.innerWidth / GW, window.innerHeight / GH));
+      setScale(Math.max(window.innerWidth / GW, window.innerHeight / GH));
     };
     upd();
     window.addEventListener("resize", upd);
     return () => window.removeEventListener("resize", upd);
   }, []);
+
 
   // Background star canvas (runs always)
   useEffect(() => {
