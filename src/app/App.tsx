@@ -896,7 +896,8 @@ function MenuScreen({ highScore, totalGems, gamesPlayed, sfxEnabled, onPlay, onS
             onMouseEnter={e => { e.currentTarget.style.color = "#00e5ff"; e.currentTarget.style.borderColor = "rgba(0,229,255,0.38)"; }}
             onMouseLeave={e => { e.currentTarget.style.color = "#4a6080"; e.currentTarget.style.borderColor = "rgba(0,229,255,0.14)"; }}
           >
-            {item.icon} {item.label}
+            {item.label}
+
           </button>
         ))}
       </div>
@@ -1532,7 +1533,11 @@ export default function App() {
     osc.frequency.setValueAtTime(freq, now);
     osc.type = tone;
     gain.gain.setValueAtTime(0, now);
-    const maxVol = Math.max(0, Math.min(1, sfxVolume / 100)) * 0.18 + 0.04;
+    const volMul = Math.max(0, Math.min(1, sfxVolume / 100));
+    // When SFX volume is set to 0, produce no sound.
+    if (volMul <= 0) return;
+    const maxVol = volMul * 0.18 + 0.04;
+
     gain.gain.linearRampToValueAtTime(maxVol, now + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
     osc.connect(gain);
