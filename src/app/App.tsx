@@ -1753,13 +1753,17 @@ export default function App() {
       const effect = stepGame(gs);
       if (effect === "gem" && sfxEnabled) playSoundEffect("gem");
 
-      // Map game coordinates (GW x GH) to the fullscreen canvas.
-      const sx = canvas.width / GW;
-      const sy = canvas.height / GH;
+      // Map game coordinates (GW x GH) to the fullscreen canvas WITHOUT stretching.
+      // Use uniform scale and center the game area so portrait/landscape both look correct.
+      const scale = Math.min(canvas.width / GW, canvas.height / GH);
+      const offsetX = (canvas.width - GW * scale) / 2;
+      const offsetY = (canvas.height - GH * scale) / 2;
+
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.scale(sx, sy);
+      ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
       drawGame(ctx, gs);
+
 
 
       if (ts - lastUI > 80) {
