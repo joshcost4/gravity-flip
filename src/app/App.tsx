@@ -1890,21 +1890,23 @@ export default function App() {
               <button
                 className="pointer-events-auto flex flex-col items-center justify-center"
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 46,
+                  height: 46,
                   background: "rgba(8,14,33,0.82)",
-                  border: "1px solid rgba(0,229,255,0.18)",
+                  border: "1px solid rgba(0,229,255,0.22)",
                   color: "#00e5ff",
                   cursor: "pointer",
-                  fontSize: 12,
-                  letterSpacing: "0.12em",
+                  padding: 0,
+                  fontSize: 10,
+                  letterSpacing: "0.22em",
                   lineHeight: 1.05,
-                  boxShadow: "0 0 24px rgba(0,229,255,0.10)",
+                  boxShadow: "0 0 26px rgba(0,229,255,0.12)",
+                  userSelect: "none",
                 }}
                 onClick={() => setScreen("paused")}
               >
-                <span style={{ display: "block", fontSize: 14, marginBottom: 2 }}>⏸</span>
-                <span style={{ display: "block", fontSize: 10, color: "rgba(200,230,255,0.85)" }}>PAUSE</span>
+                <span style={{ display: "block", fontSize: 12, fontWeight: 800, color: "#00e5ff", textShadow: "0 0 14px rgba(0,229,255,0.35)" }}>PAUSE</span>
+                <span style={{ display: "block", fontSize: 9, fontWeight: 700, color: "rgba(200,230,255,0.9)" }}>GAME</span>
               </button>
             </div>
           </div>
