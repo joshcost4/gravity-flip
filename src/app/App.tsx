@@ -1799,19 +1799,18 @@ function ScoresScreen({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.28 }}
-      className="absolute inset-0 flex flex-col justify-between p-6"
+      className="absolute inset-0 flex flex-col items-center justify-center p-6"
       style={{ background: "rgba(4,6,15,0.92)", backdropFilter: "blur(3px)" }}
     >
       <div style={{ ...orb, fontSize: "20px", fontWeight: 700, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: "16px" }}>
-        ARCADE LEADERBOARD & STATS
+        SCORES
       </div>
 
-      <div className="flex flex-1 gap-6 min-h-0 overflow-hidden mb-6">
+      <div className="w-full max-w-[520px] mb-6">
         {/* Left Side: Stats Summary */}
         <div
-          className="flex flex-col justify-between p-5"
+          className="flex flex-col gap-5 p-5"
           style={{
-            flex: "0 0 250px",
             background: "#080e21",
             border: "1px solid rgba(0,229,255,0.14)",
             borderRadius: "8px",
@@ -1904,14 +1903,14 @@ function ScoresScreen({
           </div>
         </div>
 
-        {/* Right Side: Scrollable Run History */}
+        {/* Run history is kept for progress tracking, but no longer shown in the scores UI. */}
         <div
-          className="flex-1 p-4"
+          className="hidden"
           style={{
             background: "#060b1d",
             border: "1px solid rgba(0,229,255,0.08)",
             borderRadius: "8px",
-            display: "flex",
+            display: "none",
             flexDirection: "column",
           }}
         >
@@ -2945,4 +2944,3 @@ export default function App() {
     </div>
   );
 }
-
